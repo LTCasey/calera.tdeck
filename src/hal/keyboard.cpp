@@ -3,16 +3,15 @@
  * @brief Keyboard driver implementation for T-Deck UI Firmware
  */
 
-#include "keyboard.h"
+ #include "keyboard.h"
 
  // Global keyboard instance
- TDeckKeyboard Keyboard;
+ TDeckKeyboard keyboard;
  
  TDeckKeyboard::TDeckKeyboard() : 
      _callback_count(0),
      _last_interrupt_time(0),
-     _interrupt_triggered(false),
-     _indev(nullptr)
+     _interrupt_triggered(false)
  {
      // Initialize callbacks array
      for (uint8_t i = 0; i < MAX_CALLBACKS; i++) {
@@ -41,14 +40,6 @@
      
      // Attach interrupt handler
      attachInterruptArg(_int_pin, _keyboard_isr, this, FALLING);
-     
-     // Initialize LVGL integration if enabled
-     #if TDECK_FEATURE_KEYBOARD
-     if (!_init_lvgl()) {
-         TDECK_LOG_E("Failed to initialize LVGL keyboard integration");
-         return false;
-     }
-     #endif
      
      TDECK_LOG_I("Keyboard initialized successfully");
      return true;
@@ -178,67 +169,41 @@
      return false;
  }
  
- bool TDeckKeyboard::_init_lvgl() {
-     // Initialize LVGL input device driver
-     lv_indev_drv_init(&_indev_drv);
-     _indev_drv.type = LV_INDEV_TYPE_KEYPAD;
-     _indev_drv.read_cb = _lvgl_keyboard_read;
-     _indev_drv.user_data = this;
-     
-     // Register the input device driver
-     _indev = lv_indev_drv_register(&_indev_drv);
-     
-     if (!_indev) {
-         TDECK_LOG_E("Failed to register LVGL keyboard input device");
-         return false;
-     }
-     
-     return true;
- }
- 
- void TDeckKeyboard::_lvgl_keyboard_read(lv_indev_drv_t* indev_drv, lv_indev_data_t* data) {
-     TDeckKeyboard* keyboard = static_cast<TDeckKeyboard*>(indev_drv->user_data);
-     
+ // Static callback function for LVGL keyboard input reading
+ void TDeckKeyboard::read_cb(lv_indev_drv_t* indev_drv, lv_indev_data_t* data) {
      // Default to no key pressed
      data->key = 0;
      data->state = LV_INDEV_STATE_RELEASED;
      
      // Check for arrow key presses for navigation
-     if (keyboard->isKeyPressed(TDECK_KEY_UP)) {
+     if (keyboard.isKeyPressed(TDECK_KEY_UP)) {
          data->key = LV_KEY_UP;
          data->state = LV_INDEV_STATE_PRESSED;
-     } else if (keyboard->isKeyPressed(TDECK_KEY_DOWN)) {
+     } else if (keyboard.isKeyPressed(TDECK_KEY_DOWN)) {
          data->key = LV_KEY_DOWN;
          data->state = LV_INDEV_STATE_PRESSED;
-     } else if (keyboard->isKeyPressed(TDECK_KEY_LEFT)) {
+     } else if (keyboard.isKeyPressed(TDECK_KEY_LEFT)) {
          data->key = LV_KEY_LEFT;
          data->state = LV_INDEV_STATE_PRESSED;
-     } else if (keyboard->isKeyPressed(TDECK_KEY_RIGHT)) {
+     } else if (keyboard.isKeyPressed(TDECK_KEY_RIGHT)) {
          data->key = LV_KEY_RIGHT;
          data->state = LV_INDEV_STATE_PRESSED;
-     } else if (keyboard->isKeyPressed(TDECK_KEY_ENTER)) {
+     } else if (keyboard.isKeyPressed(TDECK_KEY_ENTER)) {
          data->key = LV_KEY_ENTER;
          data->state = LV_INDEV_STATE_PRESSED;
-     } else if (keyboard->isKeyPressed(TDECK_KEY_ESC)) {
+     } else if (keyboard.isKeyPressed(TDECK_KEY_ESC)) {
          data->key = LV_KEY_ESC;
          data->state = LV_INDEV_STATE_PRESSED;
-     } else if (keyboard->isKeyPressed(TDECK_KEY_BACKSPACE)) {
+     } else if (keyboard.isKeyPressed(TDECK_KEY_BACKSPACE)) {
          data->key = LV_KEY_BACKSPACE;
          data->state = LV_INDEV_STATE_PRESSED;
-     } else if (keyboard->isKeyPressed(TDECK_KEY_HOME)) {
+     } else if (keyboard.isKeyPressed(TDECK_KEY_HOME)) {
          data->key = LV_KEY_HOME;
          data->state = LV_INDEV_STATE_PRESSED;
-     } else if (keyboard->isKeyPressed(TDECK_KEY_END)) {
+     } else if (keyboard.isKeyPressed(TDECK_KEY_END)) {
          data->key = LV_KEY_END;
          data->state = LV_INDEV_STATE_PRESSED;
      }
-     
-     // Note: Regular character keys are handled via the callback mechanism
-     // and injected into text inputs using lv_textarea_add_char()
- }
- 
- lv_indev_t* TDeckKeyboard::getLvglInputDevice() {
-     return _indev;
  }
  
  uint8_t TDeckKeyboard::_map_key_code(uint8_t row, uint8_t col) const {

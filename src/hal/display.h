@@ -12,7 +12,7 @@
  #include <Arduino.h>
  #include <TFT_eSPI.h>
  #include <lvgl.h>
- #include "../../config.h"
+ #include "../config.h"
  
  /**
   * @brief Display manager class for T-Deck
@@ -20,12 +20,12 @@
   * Handles initialization and management of the T-Deck's 2.8" IPS display,
   * including backlight control, LVGL integration, and power management.
   */
- class TDeckDisplay {
+ class Display {
  public:
      /**
-      * @brief Construct a new TDeckDisplay object
+      * @brief Construct a new Display object
       */
-     TDeckDisplay();
+     Display();
  
      /**
       * @brief Initialize the display and related components
@@ -75,13 +75,6 @@
      TFT_eSPI& getTft();
  
      /**
-      * @brief Get the LVGL display object
-      * 
-      * @return lv_disp_t* Pointer to the LVGL display object
-      */
-     lv_disp_t* getLvglDisplay();
- 
-     /**
       * @brief Update the display (should be called regularly from the main loop)
       */
      void update();
@@ -96,21 +89,19 @@
       */
      void wakeup();
  
+     /**
+      * @brief Static callback for LVGL display flush
+      * Required for LVGL to work with the display
+      * 
+      * @param disp_drv Display driver
+      * @param area Area to update
+      * @param color_p Color buffer
+      */
+     static void flush_cb(lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_color_t *color_p);
+ 
  private:
      // TFT driver instance
      TFT_eSPI _tft;
-     
-     // LVGL display buffer
-     lv_disp_draw_buf_t _draw_buf;
-     
-     // LVGL display device
-     lv_disp_drv_t _disp_drv;
-     
-     // Display buffer for LVGL
-     lv_color_t* _buf;
-     
-     // Display driver data
-     lv_disp_t* _disp;
      
      // Current backlight level
      uint8_t _backlight_level;
@@ -118,17 +109,11 @@
      // Display state
      bool _is_on;
      
-     // LVGL display flush callback
-     static void _lvgl_flush_cb(lv_disp_drv_t* disp, const lv_area_t* area, lv_color_t* color_p);
-     
-     // Initialize LVGL integration
-     bool _init_lvgl();
-     
      // Initialize backlight control
      bool _init_backlight();
  };
  
  // Global display instance
- extern TDeckDisplay Display;
+ extern Display display;
  
  #endif // TDECK_DISPLAY_H

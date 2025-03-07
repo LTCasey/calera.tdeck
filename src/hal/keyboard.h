@@ -12,7 +12,7 @@
  #include <Arduino.h>
  #include <Wire.h>
  #include <lvgl.h>
- #include "../../config.h"
+ #include "../config.h"
  
  // Key event callback type
  typedef void (*KeyEventCallback)(uint8_t key, bool pressed);
@@ -93,11 +93,12 @@
      bool unregisterCallback(KeyEventCallback callback);
  
      /**
-      * @brief Get the LVGL input device object
+      * @brief Static LVGL keyboard read callback
       * 
-      * @return lv_indev_t* Pointer to the LVGL input device object
+      * @param indev_drv Input device driver
+      * @param data Input data to be filled
       */
-     lv_indev_t* getLvglInputDevice();
+     static void read_cb(lv_indev_drv_t* indev_drv, lv_indev_data_t* data);
  
  private:
      // I2C address of the keyboard controller
@@ -112,10 +113,6 @@
      
      // I2C instance for keyboard
      TwoWire _wire = TwoWire(0);
-     
-     // LVGL input device
-     lv_indev_drv_t _indev_drv;
-     lv_indev_t* _indev;
      
      // Current key states
      uint8_t _key_states[8]; // Bitfield for 64 keys
@@ -140,12 +137,6 @@
      // Process key changes
      void _process_key_changes(const uint8_t* old_states);
      
-     // LVGL keyboard read callback
-     static void _lvgl_keyboard_read(lv_indev_drv_t* indev_drv, lv_indev_data_t* data);
-     
-     // Initialize LVGL integration
-     bool _init_lvgl();
-     
      // Get key status at specific position
      bool _get_key_state(uint8_t key) const;
      
@@ -154,6 +145,6 @@
  };
  
  // Global keyboard instance
- extern TDeckKeyboard Keyboard;
+ extern TDeckKeyboard keyboard;
  
  #endif // TDECK_KEYBOARD_H

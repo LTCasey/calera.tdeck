@@ -12,7 +12,7 @@
  #include <Arduino.h>
  #include <Wire.h>
  #include <Adafruit_FT6206.h>
- #include "../../config.h"
+ #include "../config.h"
  
  /**
   * @class TouchScreen
@@ -106,6 +106,16 @@
       */
      void setRotation(uint8_t rotation);
  
+     /**
+      * @brief Static callback function for LVGL touchscreen input
+      * 
+      * @param indev_drv Pointer to the input device driver
+      * @param data Pointer to the input data
+      * @return true if more data is available (unused)
+      * @return false if no more data is available (unused)
+      */
+     static void read_cb(lv_indev_drv_t *indev_drv, lv_indev_data_t *data);
+ 
  private:
      Adafruit_FT6206 _ft6206;         // FT6206 driver instance
      TwoWire* _wire;                  // I2C interface
@@ -132,6 +142,6 @@
  };
  
  // Global touchscreen instance
- extern TouchScreen touchscreen;
+ extern TouchScreen touchScreen;
  
  #endif // TDECK_TOUCHSCREEN_H

@@ -8,7 +8,7 @@
  #include "touchscreen.h"
 
  // Create global touchscreen instance
- TouchScreen touchscreen;
+ TouchScreen touchScreen;
  
  TouchScreen::TouchScreen() :
      _available(false),
@@ -25,8 +25,7 @@
      _wire = new TwoWire(0);
  }
  
- bool TouchScreen::begin()
- {
+ bool TouchScreen::begin() {
      // Initialize I2C bus for touchscreen
      _wire->begin(TDECK_TOUCH_SDA, TDECK_TOUCH_SCL);
      
@@ -48,13 +47,11 @@
      return true;
  }
  
- bool TouchScreen::isAvailable() const
- {
+ bool TouchScreen::isAvailable() const {
      return _available;
  }
  
- bool TouchScreen::update()
- {
+ bool TouchScreen::update() {
      if (!_available) {
          return false;
      }
@@ -85,28 +82,23 @@
      return previousTouched && !_touched;
  }
  
- uint16_t TouchScreen::getX() const
- {
+ uint16_t TouchScreen::getX() const {
      return _touchX;
  }
  
- uint16_t TouchScreen::getY() const
- {
+ uint16_t TouchScreen::getY() const {
      return _touchY;
  }
  
- uint8_t TouchScreen::getPressure() const
- {
+ uint8_t TouchScreen::getPressure() const {
      return _touchPressure;
  }
  
- bool TouchScreen::isTouched() const
- {
+ bool TouchScreen::isTouched() const {
      return _touched;
  }
  
- bool TouchScreen::reset()
- {
+ bool TouchScreen::reset() {
      // Check if reset pin is defined
      #ifdef TDECK_TOUCH_RST
          // Configure reset pin as output
@@ -126,22 +118,19 @@
      #endif
  }
  
- void TouchScreen::setCalibration(uint16_t minX, uint16_t maxX, uint16_t minY, uint16_t maxY)
- {
+ void TouchScreen::setCalibration(uint16_t minX, uint16_t maxX, uint16_t minY, uint16_t maxY) {
      _minX = minX;
      _maxX = maxX;
      _minY = minY;
      _maxY = maxY;
  }
  
- void TouchScreen::setRotation(uint8_t rotation)
- {
+ void TouchScreen::setRotation(uint8_t rotation) {
      // Ensure rotation is in valid range (0-3)
      _rotation = rotation % 4;
  }
  
- void TouchScreen::mapCoordinates(uint16_t &x, uint16_t &y)
- {
+ void TouchScreen::mapCoordinates(uint16_t &x, uint16_t &y) {
      // T-Deck touchscreen typically needs coordinates to be mapped
      // depending on the display orientation
      
@@ -187,4 +176,27 @@
      // Ensure coordinates are within display bounds
      x = constrain(x, 0, TDECK_DISPLAY_WIDTH - 1);
      y = constrain(y, 0, TDECK_DISPLAY_HEIGHT - 1);
+ }
+ 
+ // Static callback function for LVGL touch input reading
+ void TouchScreen::read_cb(lv_indev_drv_t *indev_drv, lv_indev_data_t *data) {
+     static lv_coord_t last_x = 0;
+     static lv_coord_t last_y = 0;
+     
+     // Check if touchscreen is being touched
+     if (touchScreen.isTouched()) {
+         // Get current coordinates
+         last_x = touchScreen.getX();
+         last_y = touchScreen.getY();
+         
+         // Set data for LVGL
+         data->state = LV_INDEV_STATE_PR;
+         data->point.x = last_x;
+         data->point.y = last_y;
+     } else {
+         // Not touched, set released state but keep last coordinates
+         data->state = LV_INDEV_STATE_REL;
+         data->point.x = last_x;
+         data->point.y = last_y;
+     }
  }
